@@ -326,7 +326,7 @@ class Channel extends Model
                     vodChannelIds: [$this->id],
                     overwriteExisting: $refresh ?? false,
                     sendCompletionNotification: false,
-                ));
+                ))->afterCommit();
             }
 
             return true;
