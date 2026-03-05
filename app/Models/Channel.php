@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ChannelLogoType;
 use App\Enums\PlaylistSourceType;
 use App\Facades\ProxyFacade;
+use App\Jobs\FetchTmdbIds;
 use App\Services\XtreamService;
 use App\Settings\GeneralSettings;
 use Exception;
@@ -262,10 +263,13 @@ class Channel extends Model
         return [];
     }
 
-    public function fetchMetadata($xtream = null, $refresh = false)
+    public function fetchMetadata($xtream = null, $refresh = false, bool $skipTmdb = false)
     {
         try {
             $playlist = $this->playlist;
+
+            // Get settings instance
+            $settings = app(GeneralSettings::class);
 
             // For Xtream playlists, use XtreamService
             if (! $xtream) {
@@ -316,6 +320,14 @@ class Channel extends Model
             ];
 
             $this->update($update);
+
+            if (! $skipTmdb && $settings->tmdb_auto_lookup_on_import && $this->enabled) {
+                dispatch(new FetchTmdbIds(
+                    vodChannelIds: [$this->id],
+                    overwriteExisting: $refresh ?? false,
+                    sendCompletionNotification: false,
+                ))->afterCommit();
+            }
 
             return true;
         } catch (\Exception $e) {

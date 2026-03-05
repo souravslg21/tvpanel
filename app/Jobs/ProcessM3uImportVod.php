@@ -28,20 +28,18 @@ class ProcessM3uImportVod implements ShouldQueue
     {
         $playlist = $this->playlist;
 
-        // Fetch metadata, if enabled
         if ($playlist->auto_fetch_vod_metadata) {
+            // Metadata fetch dispatches its own internal chain (ProcessVodChannelsChunk × N →
+            // ProcessVodChannelsComplete). ProcessVodChannelsComplete will then dispatch TMDB
+            // fetch and SyncVodStrmFiles in sequence once all chunks are done — no race condition.
             dispatch(new ProcessVodChannels(
                 playlist: $playlist,
-                updateProgress: false // Don't update playlist progress
+                updateProgress: false
             ));
-        }
-
-        // Sync stream files, if enabled
-        if ($playlist->auto_sync_vod_stream_files) {
-            // Process stream file syncing
-            dispatch(new SyncVodStrmFiles(
-                playlist: $playlist
-            ));
+        } elseif ($playlist->auto_sync_vod_stream_files) {
+            // No metadata fetch, but stream file sync was requested. Dispatch directly since
+            // ProcessVodChannelsComplete won't run (no metadata chain).
+            dispatch(new SyncVodStrmFiles(playlist: $playlist));
         }
 
         // All done! Nothing else to do ;)
