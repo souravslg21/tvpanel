@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SrV Creation IPTV - Premium Streaming</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f59e0b; /* Amber 500 */
+            --primary-dark: #d97706; /* Amber 600 */
+            --bg-dark: #0a0a0a;
+            --surface: rgba(255, 255, 255, 0.05);
+            --surface-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-dim: #a3a3a3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, .brand {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: linear-gradient(rgba(10, 10, 10, 0.85), rgba(10, 10, 10, 0.95)), url('bg.png');
+            background-size: cover;
+            background-position: center;
+            padding: 2rem;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 800px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .logo-container {
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            max-width: 180px;
+            filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.3));
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        .hero h1 span {
+            color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-dim);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Glassmorphism Card for Actions */
+        .action-card {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--surface-border);
+            padding: 3rem;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: inline-block;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 1.25rem 2rem;
+            border-radius: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 1.125rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #000;
+            box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px -5px rgba(245, 158, 11, 0.5);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--surface-border);
+            color: var(--text-main);
+            margin-top: 1rem;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background-color: rgba(245, 158, 11, 0.05);
+        }
+
+        /* Channels Section */
+        .channels {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .section-header p {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+        }
+
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .channel-card {
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .channel-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .channel-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .channel-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .channel-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Footer */
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid var(--surface-border);
+            color: var(--text-dim);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 3rem; }
+            .action-card { padding: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="logo-container">
+                <img src="logo.png" alt="SrV Creation IPTV Logo" class="logo">
+            </div>
+            <h1>Premium Entertainment<br><span>Evolved.</span></h1>
+            <p>Experience ultra-high definition streaming with no boundaries. Access thousands of channels, movies, and series with the best IPTV management panel.</p>
+            
+            <div class="action-card">
+                <a href="/admin/login" class="btn btn-primary">Admin Login</a>
+                <a href="https://t.me/watch_clarity" class="btn btn-outline" target="_blank">Join Telegram Community</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="channels">
+        <div class="section-header">
+            <h2>Popular Channels</h2>
+            <p>Ready to stream at lightning speed</p>
+        </div>
+        
+        <div class="channel-grid">
+            <div class="channel-card">
+                <span class="channel-icon">⚽</span>
+                <h3>Star Sports</h3>
+                <span class="channel-status">ONLINE (4K)</span>
+            </div>
+            
+            <div class="channel-card">
+                <span class="channel-icon">🎬</span>
+                <h3>Jalsha Movies</h3>
+                <span class="channel-status">ONLINE (HD)</span>
+            </div>
+            
+            <div class="channel-card">
+                <span class="channel-icon">🌍</span>
+                <h3>Global News</h3>
+                <span class="channel-status">LIVE (FHD)</span>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 SrV Creation IPTV. Powering your digital entertainment.</p>
+    </footer>
+
+    <script>
+        // Subtle hover effect logic if needed
+        document.querySelectorAll('.channel-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                // Add cinematic sound or effect if desired
+            });
+        });
+    </script>
+</body>
+</html>

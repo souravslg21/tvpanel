@@ -69,7 +69,7 @@ class AdminPanelProvider extends PanelProvider
         $adminPanel = $panel
             ->default()
             ->id('admin')
-            ->path('')
+            ->path('admin')
             // ->topbar(false)
             ->login(Login::class)
             ->loginRouteSlug(trim(config('app.login_path', 'login'), '/') ?? 'login')
@@ -78,14 +78,14 @@ class AdminPanelProvider extends PanelProvider
                 AppAuthentication::make()
                     ->recoverable(),
             ])
-            ->brandName('m3u editor')
+            ->brandName('SrV Creation IPTV')
             ->brandLogo(fn () => view('filament.admin.logo'))
             ->favicon('/favicon.png')
             ->brandLogoHeight('2.5rem')
             ->databaseNotifications()
             // ->databaseNotificationsPolling('10s')
             ->colors([
-                'primary' => Color::Indigo,
+                'primary' => Color::Amber,
             ])
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
