@@ -286,6 +286,13 @@ class PlaylistService
             return $alias; // Return the alias itself, not the underlying playlist
         }
 
+        // Also try to find a PlaylistAuth record by its own UUID (useful for direct player links)
+        // This is less common but allows direct resolution if the user uses their auth UUID as the playlist ID
+        $auth = PlaylistAuth::where('uuid', $uuid)->first();
+        if ($auth) {
+            return $auth;
+        }
+
         return null;
     }
 

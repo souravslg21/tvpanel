@@ -24,6 +24,17 @@ class PlaylistGenerateController extends Controller
             return response()->json(['Error' => 'Playlist Not Found'], 404);
         }
 
+        $usedAuth = null;
+        // If the UUID resolved to a PlaylistAuth record, use it as the auth context
+        if ($playlist instanceof \App\Models\PlaylistAuth) {
+            $usedAuth = $playlist;
+            $playlist = $usedAuth->getAssignedModel();
+
+            if (! $playlist) {
+                return response()->json(['Error' => 'No playlist assigned to this authorization'], 400);
+            }
+        }
+
         // Handle network playlists separately
         if ($playlist instanceof \App\Models\Playlist && $playlist->is_network_playlist) {
             return $this->generateNetworkPlaylist($request, $playlist);
@@ -58,25 +69,34 @@ class PlaylistGenerateController extends Controller
             $auths = $playlist->playlistAuths()->where('enabled', true)->get();
         }
 
-        $usedAuth = null;
-        if ($auths->isNotEmpty()) {
-            $authenticated = false;
-            foreach ($auths as $auth) {
-                $authUsername = $auth->username;
-                $authPassword = $auth->password;
+        if (!$usedAuth) {
+            if ($auths->isNotEmpty()) {
+                $authenticated = false;
+                foreach ($auths as $auth) {
+                    $authUsername = $auth->username;
+                    $authPassword = $auth->password;
 
-                if (
-                    $request->get('username') === $authUsername &&
-                    $request->get('password') === $authPassword
-                ) {
-                    $authenticated = true;
-                    $usedAuth = $auth;
-                    break;
+                    if (
+                        $request->get('username') === $authUsername &&
+                        $request->get('password') === $authPassword
+                    ) {
+                        $authenticated = true;
+                        $usedAuth = $auth;
+                        break;
+                    }
+                }
+
+                if (! $authenticated) {
+                    return response()->json(['Error' => 'Unauthorized'], 401);
                 }
             }
-
-            if (! $authenticated) {
-                return response()->json(['Error' => 'Unauthorized'], 401);
+        } else {
+            // If usedAuth was pre-set via UUID lookup, we still verify the request credentials
+            if (
+                $request->get('username') !== $usedAuth->username ||
+                $request->get('password') !== $usedAuth->password
+            ) {
+                return response()->json(['Error' => 'Unauthorized for this credential UUID'], 401);
             }
         }
 
@@ -122,7 +142,13 @@ class PlaylistGenerateController extends Controller
                 if ($usedAuth) {
                     $epgUrl .= '?username=' . urlencode($usedAuth->username) . '&password=' . urlencode($usedAuth->password);
                 }
+                
+                $playlistName = $playlist->name ?? 'Unknown';
+                $userName = $usedAuth ? $usedAuth->name : ($playlist->user->name ?? 'Anonymous');
+
                 echo "#EXTM3U x-tvg-url=\"$epgUrl\"\n";
+                echo "# Resolved Playlist: $playlistName ($type)\n";
+                echo "# Resolved User: $userName\n";
 
                 $count = 0;
                 $channelNumber = $playlist->auto_channel_increment ? $playlist->channel_start - 1 : 0;
