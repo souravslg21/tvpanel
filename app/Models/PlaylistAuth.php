@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
@@ -136,19 +137,6 @@ class PlaylistAuth extends Model
         return $model ? $model->name : '';
     }
 
-    /**
-     * @throws ValidationException
-     */
-    public function setRelation($relation, $value)
-    {
-        if ($relation === 'playlists') {
-            if ($this->playlists()->exists()) {
-                throw new ValidationException('A PlaylistAuth can only be assigned to one model at a time.');
-            }
-        }
-
-        parent::setRelation($relation, $value);
-    }
 
     /**
      * Boot method to add model event listeners
