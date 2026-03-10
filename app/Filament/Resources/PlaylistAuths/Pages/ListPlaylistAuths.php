@@ -13,7 +13,7 @@ class ListPlaylistAuths extends ListRecords
 {
     protected static string $resource = PlaylistAuthResource::class;
 
-    protected ?string $subheading = 'Create credentials and assign them to your Playlist for simple authentication. They can also be used to access the Xtream API for the assigned Playlists.';
+    protected ?string $subheading = 'Create credentials and assign them to your Playlist for simple authentication.';
 
     protected function getHeaderActions(): array
     {
@@ -23,22 +23,7 @@ class ListPlaylistAuths extends ListRecords
                     $data['user_id'] = auth()->id();
 
                     return $model::create($data);
-                })
-                ->successNotification(
-                    Notification::make()
-                        ->success()
-                        ->title('Playlist Auth created')
-                        ->body('You can now assign Playlists to this Auth.'),
-                ),
+                }),
         ];
-    }
-
-    /**
-     * @deprecated Override the `table()` method to configure the table.
-     */
-    protected function getTableQuery(): ?Builder
-    {
-        return static::getResource()::getEloquentQuery()
-            ->where('user_id', auth()->id());
     }
 }
