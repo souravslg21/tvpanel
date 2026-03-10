@@ -125,16 +125,19 @@ class PlaylistAuthResource extends Resource
                                 if (! $record) {
                                     return;
                                 }
-                                $model = $record->getAssignedModel();
-                                if ($model) {
-                                    $type = match (get_class($model)) {
-                                        Playlist::class => 'Playlist',
-                                        MergedPlaylist::class => 'Merged',
-                                        CustomPlaylist::class => 'Custom',
-                                        default => 'Playlist',
-                                    };
-                                    $uuid = $model->uuid;
-                                    $component->state("{$type}:{$uuid}");
+                                try {
+                                    $model = $record->getAssignedModel();
+                                    if ($model) {
+                                        $type = match (get_class($model)) {
+                                            Playlist::class => 'Playlist',
+                                            MergedPlaylist::class => 'Merged',
+                                            CustomPlaylist::class => 'Custom',
+                                            default => 'Playlist',
+                                        };
+                                        $uuid = $model->uuid;
+                                        $component->state("{$type}:{$uuid}");
+                                    }
+                                } catch (\Exception $e) {
                                 }
                             })
                             ->saveRelationshipsUsing(function (PlaylistAuth $record, $state) {
@@ -169,21 +172,20 @@ class PlaylistAuthResource extends Resource
                                 if (! $record) {
                                     return '';
                                 }
-                                $model = $record->getAssignedModel();
-                                if (! $model) {
-                                    return 'Assign a playlist to generate M3U link';
-                                }
-
-                                if (! in_array(get_class($model), [Playlist::class, MergedPlaylist::class, CustomPlaylist::class])) {
-                                    return 'Invalid assigned model type';
-                                }
-
                                 try {
-                                    // Use the facade to get URLs. We'll pass the model which is expected.
-                                    /** @var Playlist|MergedPlaylist|CustomPlaylist $model */
+                                    $model = $record->getAssignedModel();
+                                    if (! $model) {
+                                        return 'Assign a playlist to generate M3U link';
+                                    }
+
+                                    if (! in_array(get_class($model), [Playlist::class, MergedPlaylist::class, CustomPlaylist::class])) {
+                                        return 'Invalid assigned model type';
+                                    }
+
+                                    // Use the facade to get URLs.
                                     return PlaylistFacade::getUrls($model)['m3u'];
                                 } catch (\Exception $e) {
-                                    return 'Error generating URL: ' . $e->getMessage();
+                                    return 'Error generating URL';
                                 }
                             }),
                         TextInput::make('xtream_url')
@@ -198,7 +200,6 @@ class PlaylistAuthResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['assignedPlaylist.authenticatable']))
             ->columns([
                 TextColumn::make('name')
                     ->searchable()
@@ -206,11 +207,6 @@ class PlaylistAuthResource extends Resource
                 TextColumn::make('username')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('assigned_model_name')
-                    ->label('Assigned To')
-                    ->badge()
-                    ->color('info')
-                    ->getStateUsing(fn (PlaylistAuth $record) => $record->getAssignedModel()?->name ?? 'None'),
                 TextColumn::make('enabled')
                     ->badge()
                     ->color(fn ($state) => $state ? 'success' : 'danger')
