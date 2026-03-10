@@ -48,8 +48,9 @@ export PROFILE_CONNECTION_WORKER_ENABLED="${PROFILE_CONNECTION_WORKER_ENABLED:-t
 export SUPERVISOR_PHP_USER="root"
 
 # Application URL and port
+# Favor $PORT if provided (Railway/Koyeb standard), otherwise fallback to 36400
+export APP_PORT="${PORT:-${APP_PORT:-36400}}"
 export APP_URL="${APP_URL:-http://localhost}"
-export APP_PORT="${APP_PORT:-36400}" # Default 36400
 
 # Xtream API endpoint port (separate nginx instance for Xtream-only access)
 export XTREAM_PORT="${XTREAM_PORT:-36401}" # Default 36401
