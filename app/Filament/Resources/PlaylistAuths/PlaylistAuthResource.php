@@ -24,6 +24,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Filament\Tables;
+use Filament\Forms\Components\Section;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\RecordActionsPosition;
@@ -71,6 +72,10 @@ class PlaylistAuthResource extends Resource
                     ->searchable()
                     ->toggleable()
                     ->sortable(),
+                TextColumn::make('max_connections')
+                    ->label('Connections')
+                    ->sortable()
+                    ->toggleable(),
                 // Tables\Columns\TextColumn::make('password')
                 //     ->searchable()
                 //     ->sortable()
@@ -145,6 +150,12 @@ class PlaylistAuthResource extends Resource
                 ->password()
                 ->required()
                 ->revealable()
+                ->columnSpan(1),
+            TextInput::make('max_connections')
+                ->label('Max Connections')
+                ->numeric()
+                ->default(1)
+                ->required()
                 ->columnSpan(1),
             DateTimePicker::make('expires_at')
                 ->label('Expiration (date & time)')
@@ -261,6 +272,44 @@ class PlaylistAuthResource extends Resource
                         ->columnSpan(2),
                 ])
                 ->columns(2),
+            Section::make('Access Details')
+                ->description('Share these details with your customer.')
+                ->schema([
+                    TextInput::make('m3u_url')
+                        ->label('M3U Playlist URL')
+                        ->readonly()
+                        ->default(fn ($record) => $record && $record->isAssigned() ? route('playlist.generate', [
+                            'uuid' => $record->getAssignedModel()->uuid,
+                            'username' => $record->username,
+                            'password' => $record->password,
+                        ]) : 'Assign to a playlist to see URL')
+                        ->suffixAction(function ($state) {
+                            return Forms\Components\Actions\Action::make('copy_m3u')
+                                ->icon('heroicon-m-clipboard')
+                                ->action(fn() => null) // handled by alpine/js
+                                ->extraAttributes([
+                                    'onclick' => 'window.navigator.clipboard.writeText("'.addslashes($state).'"); window.$wire.dispatch("notify", { status: "success", title: "Copied to clipboard" });',
+                                ]);
+                        })
+                        ->columnSpanFull(),
+                    TextInput::make('xtream_url')
+                        ->label('Xtream API Server URL')
+                        ->readonly()
+                        ->default(fn () => url('/'))
+                        ->columnSpan(2),
+                    TextInput::make('xtream_username')
+                        ->label('Xtream Username')
+                        ->readonly()
+                        ->default(fn ($record) => $record?->username)
+                        ->columnSpan(1),
+                    TextInput::make('xtream_password')
+                        ->label('Xtream Password')
+                        ->readonly()
+                        ->default(fn ($record) => $record?->password)
+                        ->columnSpan(1),
+                ])
+                ->columns(2)
+                ->hiddenOn(['create']),
         ];
     }
 }

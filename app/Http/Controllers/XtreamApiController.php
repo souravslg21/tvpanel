@@ -375,12 +375,14 @@ class XtreamApiController extends Controller
             'username' => 'required|string',
             'password' => 'required|string',
         ]);
-        [$playlist, $authMethod, $username, $password] = $this->authenticate($request);
+        $auth = $this->authenticate($request);
 
         // If no authentication method worked, return error
-        if (! $playlist || $authMethod === 'none') {
+        if ($auth === false || ! $auth[0] || $auth[1] === 'none') {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
+
+        [$playlist, $authMethod, $username, $password] = $auth;
 
         $urlSafePass = urlencode($password);
         $urlSafeUser = urlencode($username);
@@ -437,8 +439,19 @@ class XtreamApiController extends Controller
                 $password
             );
 
+            $maxConnections = PlaylistFacade::resolveXtreamMaxConnections(
+                $playlist,
+                $authMethod,
+                $username,
+                $password
+            );
+
             if (empty($expDate) || (int) $expDate === 0) {
                 $expDate = $expires;
+            }
+
+            if (empty($maxConnections) || (int) $maxConnections === 0) {
+                $maxConnections = $streams;
             }
 
             $settings = app(\App\Settings\GeneralSettings::class);
@@ -454,7 +467,7 @@ class XtreamApiController extends Controller
                 'is_trial' => '0', // Trial accounts not supported
                 'active_cons' => (string) $activeConnections,
                 'created_at' => (string) ($playlist->user ? $playlist->user->created_at->timestamp : $now->timestamp),
-                'max_connections' => (string) $streams,
+                'max_connections' => (string) $maxConnections,
                 'allowed_output_formats' => $outputFormats,
             ];
 
@@ -462,29 +475,41 @@ class XtreamApiController extends Controller
             $parsedUrl = parse_url($baseUrl);
             $scheme = $parsedUrl['scheme'] ?? 'http';
             $host = $parsedUrl['host'];
-            $port = isset($parsedUrl['port']) ? (string) $parsedUrl['port'] : '80';
+            $port = isset($parsedUrl['port']) ? (string) $parsedUrl['port'] : ($scheme === 'https' ? '443' : '80');
 
             $port = $settings->xtream_api_details['http_port'] ?? $port;
             $httpsPort = $settings->xtream_api_details['https_port'] ?? '443';
 
             $serverInfo = [
-                'url' => $host,
-                'port' => (string) $port, // Should be 80 for HTTP, otherwise use the specified port (e.g.: 36400
-                'https_port' => (string) $httpsPort, // Should always be 443 for HTTPS
+                'url' => (string) ($parsedUrl['host'] ?? $baseUrl),
+                'port' => (string) $port,
+                'https_port' => (string) $httpsPort,
                 'server_protocol' => $scheme,
-                'rtmp_port' => '8001', // RTMP not available currently, we'll just return the default RTMP port
-                // Timestamps will use the passed in timezone (server timezone)
+                'rtmp_port' => (string) ($settings->xtream_api_details['rtmp_port'] ?? '8001'),
                 'timestamp_now' => $now->timestamp,
-                'time_now' => $now->toDateTimeString(),
-                // We'll set the timezone to the server timezone
-                'timezone' => Config::get('app.timezone', 'UTC'),
-                'process' => true, // Always true
+                'time_now' => $now->format('Y-m-d H:i:s'),
+                'timezone' => config('app.timezone', 'UTC'),
+                'server_time' => $now->timestamp,
+                'local_time' => $now->toDateTimeString(),
+                'process' => true,
+                'mac_custom' => '0',
             ];
 
-            return response()->json([
+            // If action is panel or empty, some players expect categories to be present (even if empty)
+            $response = [
                 'user_info' => $userInfo,
                 'server_info' => $serverInfo,
-            ]);
+            ];
+
+            if ($action === 'panel' || empty($request->input('action'))) {
+                $response['categories'] = [
+                    'live' => [],
+                    'vod' => [],
+                    'series' => [],
+                ];
+            }
+
+            return response()->json($response);
         } elseif ($action === 'get_live_streams') {
             // Handle network playlists - return networks as live streams
             if ($isNetworkPlaylist) {

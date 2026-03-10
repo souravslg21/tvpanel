@@ -607,6 +607,42 @@ class PlaylistService
     }
 
     /**
+     * Resolve max_connections for Xtream user_info based on the auth method used.
+     *
+     * @param  mixed  $authRecord  PlaylistAuth|PlaylistAlias|Playlist|CustomPlaylist|MergedPlaylist
+     */
+    public function resolveXtreamMaxConnections($authRecord, string $authMethod, ?string $username, ?string $password): int
+    {
+        // PlaylistAuth login: resolve by credentials
+        if ($authMethod === 'playlist_auth' && $username && $password) {
+            $playlistAuth = PlaylistAuth::where('username', $username)
+                ->where('password', $password)
+                ->where('enabled', true)
+                ->first();
+
+            return $playlistAuth?->max_connections ?? 0;
+        }
+
+        // Alias login
+        if ($authMethod === 'alias_auth' && $authRecord instanceof PlaylistAlias) {
+            // PlaylistAlias doesn't have max_connections yet, default to 0 to fallback to playlist default
+            return 0;
+        }
+
+        // Legacy (owner_auth) optional override
+        if ($authMethod === 'owner_auth' && $username && $password) {
+            $legacyOverride = PlaylistAuth::where('username', $username)
+                ->where('password', $password)
+                ->where('enabled', true)
+                ->first();
+
+            return $legacyOverride?->max_connections ?? 0;
+        }
+
+        return 0;
+    }
+
+    /**
      * Generate a timeshift URL for a given stream.
      *
      * @param  Playlist|MergedPlaylist|CustomPlaylist|PlaylistAlias  $playlist
