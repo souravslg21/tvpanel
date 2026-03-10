@@ -1,8 +1,8 @@
 {
     "version": 2,
     "framework": null,
-    "buildCommand": null,
-    "installCommand": null,
+    "buildCommand": "echo 'Skipping build'",
+    "installCommand": "echo 'Skipping install'",
     "rewrites": [
         {
             "source": "/(.*)",
