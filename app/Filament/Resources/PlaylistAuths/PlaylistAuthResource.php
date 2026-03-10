@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\PlaylistAuths;
 
-use App\Filament\Resources\PlaylistAuths\Pages;
+use App\Filament\Resources\PlaylistAuths\Pages\ListPlaylistAuths;
 use App\Models\CustomPlaylist;
 use App\Models\MergedPlaylist;
 use App\Models\Playlist;
@@ -112,7 +112,7 @@ class PlaylistAuthResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPlaylistAuths::route('/'),
+            'index' => ListPlaylistAuths::route('/'),
         ];
     }
 
