@@ -578,7 +578,7 @@ class PlaylistService
     {
         // PlaylistAuth login: authRecord is the assigned playlist model, so resolve by creds
         if ($authMethod === 'playlist_auth' && $username && $password) {
-            $playlistAuth = PlaylistAuth::where('username', $username)
+            $playlistAuth = PlaylistAuth::query()->where('username', $username)
                 ->where('password', $password)
                 ->where('enabled', true)
                 ->first();
@@ -594,7 +594,7 @@ class PlaylistService
 
         // Legacy (owner_auth) optional override
         if ($authMethod === 'owner_auth' && $username && $password) {
-            $legacyOverride = PlaylistAuth::where('username', $username)
+            $legacyOverride = PlaylistAuth::query()->where('username', $username)
                 ->where('password', $password)
                 ->where('enabled', true)
                 ->first();

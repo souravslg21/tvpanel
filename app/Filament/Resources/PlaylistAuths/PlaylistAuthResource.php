@@ -3,12 +3,10 @@
 namespace App\Filament\Resources\PlaylistAuths;
 
 use App\Facades\PlaylistFacade;
-use App\Filament\Resources\PlaylistAuths\Pages\ListPlaylistAuths;
 use App\Models\CustomPlaylist;
 use App\Models\MergedPlaylist;
 use App\Models\Playlist;
 use App\Models\PlaylistAuth;
-use App\Traits\HasUserFiltering;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
@@ -18,16 +16,18 @@ use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class PlaylistAuthResource extends Resource
 {
-    use HasUserFiltering;
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('user_id', auth()->id());
+    }
 
     protected static ?string $model = PlaylistAuth::class;
 
@@ -58,106 +58,75 @@ class PlaylistAuthResource extends Resource
                 Section::make('General Information')
                     ->schema([
                         TextInput::make('name')
-                            ->label('Name')
                             ->required()
-                            ->helperText('Used to reference these credentials internally.'),
+                            ->maxLength(255),
                         Toggle::make('enabled')
-                            ->label('Enabled')
                             ->default(true),
-                    ])->columns(2),
-
-                Section::make('Credentials')
-                    ->description('Xtream API / M3U authentication details')
-                    ->schema([
                         TextInput::make('username')
-                            ->label('Username')
                             ->required()
-                            ->autocomplete('off'),
+                            ->maxLength(255),
                         TextInput::make('password')
-                            ->label('Password')
-                            ->password()
                             ->required()
-                            ->revealable()
-                            ->autocomplete('off'),
-                    ])->columns(2),
-
-                Section::make('Settings & Limits')
-                    ->schema([
+                            ->maxLength(255),
                         TextInput::make('max_connections')
-                            ->label('Max Connections')
                             ->numeric()
-                            ->minValue(0)
-                            ->placeholder('Uses playlist default')
-                            ->helperText('Maximum concurrent streams allowed for this user. 0 for unlimited (uses playlist default).'),
-                        DateTimePicker::make('expires_at')
-                            ->label('Expiration Date')
-                            ->nullable()
-                            ->helperText('Leave empty for no expiration.'),
+                            ->default(1),
+                        DateTimePicker::make('expires_at'),
                     ])->columns(2),
 
-                Section::make('Playlist Assignment')
-                    ->description('Assign these credentials to a specific playlist.')
+                Section::make('Assignment')
                     ->schema([
-                        Select::make('assigned_playlist')
-                            ->label('Assigned Playlist')
+                        Select::make('assigned_model')
+                            ->label('Assign to Playlist')
                             ->options(function () {
-                                $userId = Auth::id();
-                                $playlists = Playlist::where('user_id', $userId)->get(['id', 'name', 'uuid'])->pluck('name', 'uuid')->toArray();
-                                $mergedPlaylists = MergedPlaylist::where('user_id', $userId)->get(['id', 'name', 'uuid'])->pluck('name', 'uuid')->toArray();
-                                $customPlaylists = CustomPlaylist::where('user_id', $userId)->get(['id', 'name', 'uuid'])->pluck('name', 'uuid')->toArray();
-
-                                $options = [];
-                                foreach ($playlists as $uuid => $name) {
-                                    $options["Playlist:{$uuid}"] = "Playlist: {$name}";
-                                }
-                                foreach ($mergedPlaylists as $uuid => $name) {
-                                    $options["Merged:{$uuid}"] = "Merged: {$name}";
-                                }
-                                foreach ($customPlaylists as $uuid => $name) {
-                                    $options["Custom:{$uuid}"] = "Custom: {$name}";
-                                }
-
-                                return $options;
-                            })
-                            ->live()
-                            ->dehydrated(false)
-                            ->afterStateHydrated(function (Select $component, ?PlaylistAuth $record) {
-                                if (! $record) {
-                                    return;
-                                }
                                 try {
-                                    $model = $record->getAssignedModel();
-                                    if ($model) {
-                                        $type = match (get_class($model)) {
-                                            Playlist::class => 'Playlist',
-                                            MergedPlaylist::class => 'Merged',
-                                            CustomPlaylist::class => 'Custom',
-                                            default => 'Playlist',
-                                        };
-                                        $uuid = $model->uuid;
-                                        $component->state("{$type}:{$uuid}");
-                                    }
+                                    $playlists = Playlist::query()->where('user_id', auth()->id())->get()->pluck('name', 'uuid');
+                                    $merged = MergedPlaylist::query()->where('user_id', auth()->id())->get()->pluck('name', 'uuid');
+                                    $custom = CustomPlaylist::query()->where('user_id', auth()->id())->get()->pluck('name', 'uuid');
+                                    
+                                    $options = [];
+                                    foreach ($playlists as $uuid => $name) $options["Playlist:{$uuid}"] = "Playlist: {$name}";
+                                    foreach ($merged as $uuid => $name) $options["Merged:{$uuid}"] = "Merged: {$name}";
+                                    foreach ($custom as $uuid => $name) $options["Custom:{$uuid}"] = "Custom: {$name}";
+                                    
+                                    return $options;
                                 } catch (\Exception $e) {
+                                    return [];
                                 }
                             })
-                            ->saveRelationshipsUsing(function (PlaylistAuth $record, $state) {
-                                if (empty($state)) {
-                                    $record->clearAssignment();
-
-                                    return;
-                                }
-
-                                [$type, $uuid] = explode(':', $state);
-                                $modelClass = match ($type) {
-                                    'Playlist' => Playlist::class,
-                                    'Merged' => MergedPlaylist::class,
-                                    'Custom' => CustomPlaylist::class,
+                            ->dehydrated(false)
+                            ->live()
+                            ->afterStateHydrated(function (Select $component, ?PlaylistAuth $record) {
+                                if (!$record) return;
+                                $model = $record->getAssignedModel();
+                                if (!$model) return;
+                                $type = match (get_class($model)) {
+                                    Playlist::class => 'Playlist',
+                                    MergedPlaylist::class => 'Merged',
+                                    CustomPlaylist::class => 'Custom',
+                                    default => null,
                                 };
-
-                                $model = $modelClass::where('uuid', $uuid)->first();
-                                if ($model) {
-                                    $record->assignTo($model);
+                                if ($type) {
+                                    $component->state("{$type}:{$model->uuid}");
                                 }
+                            })
+                            ->afterStateUpdated(function ($state, ?PlaylistAuth $record) {
+                                if (!$state || !$record) return;
+                                try {
+                                    [$type, $uuid] = explode(':', $state);
+                                    $modelClass = match ($type) {
+                                        'Playlist' => Playlist::class,
+                                        'Merged' => MergedPlaylist::class,
+                                        'Custom' => CustomPlaylist::class,
+                                        default => null,
+                                    };
+                                    if ($modelClass) {
+                                        $model = $modelClass::where('uuid', $uuid)->first();
+                                        if ($model) {
+                                            $record->assignTo($model);
+                                        }
+                                    }
+                                } catch (\Exception $e) {}
                             }),
                     ]),
 
@@ -166,33 +135,20 @@ class PlaylistAuthResource extends Resource
                     ->schema([
                         TextInput::make('m3u_url')
                             ->label('M3U URL')
-                            ->helperText('Copy this URL to your IPTV player (OTT Navigator, TiviMate, etc.)')
                             ->readOnly()
-                            ->formatStateUsing(function (?PlaylistAuth $record) {
-                                if (! $record) {
-                                    return '';
-                                }
+                            ->getStateUsing(function (?PlaylistAuth $record) {
+                                if (!$record) return '';
                                 try {
                                     $model = $record->getAssignedModel();
-                                    if (! $model) {
-                                        return 'Assign a playlist to generate M3U link';
-                                    }
-
-                                    if (! in_array(get_class($model), [Playlist::class, MergedPlaylist::class, CustomPlaylist::class])) {
-                                        return 'Invalid assigned model type';
-                                    }
-
-                                    // Use the facade to get URLs.
-                                    return PlaylistFacade::getUrls($model)['m3u'];
+                                    return $model ? PlaylistFacade::getUrls($model)['m3u'] : 'Not assigned';
                                 } catch (\Exception $e) {
-                                    return 'Error generating URL';
+                                    return 'Error';
                                 }
                             }),
                         TextInput::make('xtream_url')
                             ->label('Xtream API Host')
                             ->readOnly()
-                            ->formatStateUsing(fn () => rtrim(config('app.url') ?? '', '/'))
-                            ->helperText('Use this as the Server URL in Xtream API players.'),
+                            ->default(fn () => rtrim(config('app.url') ?? '', '/')),
                     ])->columns(2),
             ]);
     }
@@ -209,44 +165,28 @@ class PlaylistAuthResource extends Resource
                     ->sortable(),
                 TextColumn::make('enabled')
                     ->badge()
-                    ->color(fn ($state) => $state ? 'success' : 'danger')
-                    ->formatStateUsing(fn ($state) => $state ? 'Enabled' : 'Disabled')
-                    ->sortable(),
-                TextColumn::make('expires_at')
-                    ->label('Expires')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(),
+                    ->color(fn(bool $state): string => $state ? 'success' : 'danger'),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
-            ->recordActions([
+            ->filters([])
+            ->actions([
                 EditAction::make(),
                 DeleteAction::make(),
-            ], position: RecordActionsPosition::BeforeCells)
-            ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
             ]);
     }
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListPlaylistAuths::route('/'),
+            'index' => \App\Filament\Resources\PlaylistAuths\Pages\ListPlaylistAuths::route('/'),
         ];
     }
 }
