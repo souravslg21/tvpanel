@@ -139,21 +139,32 @@ class PlaylistAuthResource extends Resource
                                 try {
                                     $model = $record->getAssignedModel();
                                     if ($model && !empty($model->uuid)) {
-                                        // Force the correct base URL from request or config override
                                         $baseUrl = request()->getSchemeAndHttpHost();
                                         if (str_contains($baseUrl, 'localhost')) {
                                             $baseUrl = rtrim(config('app.url') ?? $baseUrl, '/');
                                         }
                                         
-                                        $className = get_class($model);
-                                        $type = null;
-                                        if ($className === Playlist::class) $type = 'playlist';
-                                        elseif ($className === MergedPlaylist::class) $type = 'merged';
-                                        elseif ($className === CustomPlaylist::class) $type = 'custom';
-                                        
-                                        if ($type) {
-                                            return "{$baseUrl}/{$type}/{$model->uuid}/m3u?username=" . urlencode($record->username) . "&password=" . urlencode($record->password);
+                                        // Standard M3U route: /{uuid}/playlist.m3u
+                                        return "{$baseUrl}/{$model->uuid}/playlist.m3u?username=" . urlencode($record->username) . "&password=" . urlencode($record->password);
+                                    }
+                                } catch (\Exception $e) {}
+                                return 'Not assigned';
+                            }),
+                        TextInput::make('epg_display')
+                            ->label('User EPG URL')
+                            ->readOnly()
+                            ->formatStateUsing(function (?PlaylistAuth $record) {
+                                if (!$record || !$record->exists) return 'N/A';
+                                try {
+                                    $model = $record->getAssignedModel();
+                                    if ($model && !empty($model->uuid)) {
+                                        $baseUrl = request()->getSchemeAndHttpHost();
+                                        if (str_contains($baseUrl, 'localhost')) {
+                                            $baseUrl = rtrim(config('app.url') ?? $baseUrl, '/');
                                         }
+                                        
+                                        // Standard EPG route: /{uuid}/epg.xml
+                                        return "{$baseUrl}/{$model->uuid}/epg.xml?username=" . urlencode($record->username) . "&password=" . urlencode($record->password);
                                     }
                                 } catch (\Exception $e) {}
                                 return 'Not assigned';
