@@ -12,10 +12,11 @@ trait HasUserFiltering
      */
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery()
-            ->where(static::getModel()::make()->getTable().'.user_id', auth()->id());
+        $model = static::getModel();
+        $table = (new $model())->getTable();
 
-        return $query;
+        return parent::getEloquentQuery()
+            ->where($table.'.user_id', auth()->id());
     }
 
     /**
@@ -24,9 +25,10 @@ trait HasUserFiltering
      */
     public static function getGlobalSearchEloquentQuery(): Builder
     {
-        $query = parent::getGlobalSearchEloquentQuery()
-            ->where(static::getModel()::make()->getTable().'.user_id', auth()->id());
+        $model = static::getModel();
+        $table = (new $model())->getTable();
 
-        return $query;
+        return parent::getGlobalSearchEloquentQuery()
+            ->where($table.'.user_id', auth()->id());
     }
 }
