@@ -46,14 +46,15 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        $userPreferences = app(GeneralSettings::class);
         $settings = [
             'navigation_position' => 'left',
             'show_breadcrumbs' => true,
             'content_width' => Width::ScreenLarge,
             'output_wan_address' => false,
         ];
+
         try {
+            $userPreferences = app(GeneralSettings::class);
             $envShowWan = config('dev.show_wan_details', false);
             $settings = [
                 'navigation_position' => $userPreferences->navigation_position ?? $settings['navigation_position'],
@@ -118,13 +119,13 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Tools')
                     ->sort(sort: 9)
                     ->icon(null)
-                    ->visible(fn (): bool => in_array(auth()->user()->email, config('dev.admin_emails'), true)),
+                    ->visible(fn (): bool => auth()->user() && in_array(auth()->user()->email, config('dev.admin_emails'), true)),
                 NavigationItem::make('Queue Manager')
                     ->url('/horizon', shouldOpenInNewTab: true)
                     ->group('Tools')
                     ->sort(10)
                     ->icon(null)
-                    ->visible(fn (): bool => in_array(auth()->user()->email, config('dev.admin_emails'), true)),
+                    ->visible(fn (): bool => auth()->user() && in_array(auth()->user()->email, config('dev.admin_emails'), true)),
             ])
             ->breadcrumbs($settings['show_breadcrumbs'])
             ->widgets([
@@ -141,10 +142,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 FilamentSpatieLaravelBackupPlugin::make()
-                    ->authorize(fn (): bool => in_array(auth()->user()->email, config('dev.admin_emails'), true))
+                    ->authorize(fn (): bool => auth()->user() && in_array(auth()->user()->email, config('dev.admin_emails'), true))
                     ->usingPage(Backups::class),
                 FilamentLaravelLogPlugin::make()
-                    ->authorize(fn (): bool => in_array(auth()->user()->email, config('dev.admin_emails'), true))
+                    ->authorize(fn (): bool => auth()->user() && in_array(auth()->user()->email, config('dev.admin_emails'), true))
                     ->navigationGroup('Tools')
                     ->navigationLabel('Logs')
                     ->navigationIcon(null)
