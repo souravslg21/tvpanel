@@ -7,6 +7,9 @@ use App\Models\CustomPlaylist;
 use App\Models\MergedPlaylist;
 use App\Models\Playlist;
 use App\Models\PlaylistAuth;
+use App\Filament\Resources\PlaylistAuths\Pages\ListPlaylistAuths;
+use App\Filament\Resources\PlaylistAuths\Pages\CreatePlaylistAuth;
+use App\Filament\Resources\PlaylistAuths\Pages\EditPlaylistAuth;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
@@ -55,7 +58,8 @@ class PlaylistAuthResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('General Information')
+                Section::make('Credentials')
+                    ->description('Username and Password for player login')
                     ->schema([
                         TextInput::make('name')
                             ->required()
@@ -80,14 +84,17 @@ class PlaylistAuthResource extends Resource
                             ->label('Assign to Playlist')
                             ->options(function () {
                                 try {
-                                    $playlists = Playlist::query()->where('user_id', auth()->id())->get()->pluck('name', 'uuid');
-                                    $merged = MergedPlaylist::query()->where('user_id', auth()->id())->get()->pluck('name', 'uuid');
-                                    $custom = CustomPlaylist::query()->where('user_id', auth()->id())->get()->pluck('name', 'uuid');
+                                    $userId = auth()->id();
+                                    if (!$userId) return [];
+
+                                    $playlists = Playlist::query()->where('user_id', $userId)->get(['name', 'uuid']);
+                                    $merged = MergedPlaylist::query()->where('user_id', $userId)->get(['name', 'uuid']);
+                                    $custom = CustomPlaylist::query()->where('user_id', $userId)->get(['name', 'uuid']);
                                     
                                     $options = [];
-                                    foreach ($playlists as $uuid => $name) $options["Playlist:{$uuid}"] = "Playlist: {$name}";
-                                    foreach ($merged as $uuid => $name) $options["Merged:{$uuid}"] = "Merged: {$name}";
-                                    foreach ($custom as $uuid => $name) $options["Custom:{$uuid}"] = "Custom: {$name}";
+                                    foreach ($playlists as $p) $options["Playlist:{$p->uuid}"] = "Playlist: {$p->name}";
+                                    foreach ($merged as $m) $options["Merged:{$m->uuid}"] = "Merged: {$m->name}";
+                                    foreach ($custom as $c) $options["Custom:{$c->uuid}"] = "Custom: {$c->name}";
                                     
                                     return $options;
                                 } catch (\Exception $e) {
@@ -98,21 +105,26 @@ class PlaylistAuthResource extends Resource
                             ->live()
                             ->afterStateHydrated(function (Select $component, ?PlaylistAuth $record) {
                                 if (!$record) return;
-                                $model = $record->getAssignedModel();
-                                if (!$model) return;
-                                $type = match (get_class($model)) {
-                                    Playlist::class => 'Playlist',
-                                    MergedPlaylist::class => 'Merged',
-                                    CustomPlaylist::class => 'Custom',
-                                    default => null,
-                                };
-                                if ($type) {
-                                    $component->state("{$type}:{$model->uuid}");
-                                }
+                                try {
+                                    $model = $record->getAssignedModel();
+                                    if (!$model) return;
+                                    
+                                    $type = match (get_class($model)) {
+                                        Playlist::class => 'Playlist',
+                                        MergedPlaylist::class => 'Merged',
+                                        CustomPlaylist::class => 'Custom',
+                                        default => null,
+                                    };
+                                    
+                                    if ($type && isset($model->uuid)) {
+                                        $component->state("{$type}:{$model->uuid}");
+                                    }
+                                } catch (\Exception $e) {}
                             })
                             ->afterStateUpdated(function ($state, ?PlaylistAuth $record) {
                                 if (!$state || !$record) return;
                                 try {
+                                    if (!str_contains($state, ':')) return;
                                     [$type, $uuid] = explode(':', $state);
                                     $modelClass = match ($type) {
                                         'Playlist' => Playlist::class,
@@ -133,19 +145,23 @@ class PlaylistAuthResource extends Resource
                 Section::make('Client Setup Details')
                     ->visible(fn (?PlaylistAuth $record) => $record && $record->exists)
                     ->schema([
-                        TextInput::make('m3u_url')
+                        TextInput::make('m3u_url_display')
                             ->label('M3U URL')
                             ->readOnly()
                             ->getStateUsing(function (?PlaylistAuth $record) {
                                 if (!$record) return '';
                                 try {
                                     $model = $record->getAssignedModel();
-                                    return $model ? PlaylistFacade::getUrls($model)['m3u'] : 'Not assigned';
+                                    if ($model) {
+                                        $urls = PlaylistFacade::getUrls($model);
+                                        return $urls['m3u'] ?? 'Error: No M3U link';
+                                    }
+                                    return 'Not assigned';
                                 } catch (\Exception $e) {
-                                    return 'Error';
+                                    return 'Error generating link';
                                 }
                             }),
-                        TextInput::make('xtream_url')
+                        TextInput::make('xtream_url_display')
                             ->label('Xtream API Host')
                             ->readOnly()
                             ->default(fn () => rtrim(config('app.url') ?? '', '/')),
@@ -166,10 +182,6 @@ class PlaylistAuthResource extends Resource
                 TextColumn::make('enabled')
                     ->badge()
                     ->color(fn(bool $state): string => $state ? 'success' : 'danger'),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([])
             ->actions([
@@ -186,7 +198,9 @@ class PlaylistAuthResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Resources\PlaylistAuths\Pages\ListPlaylistAuths::route('/'),
+            'index' => ListPlaylistAuths::route('/'),
+            'create' => CreatePlaylistAuth::route('/create'),
+            'edit' => EditPlaylistAuth::route('/{record}/edit'),
         ];
     }
 }
