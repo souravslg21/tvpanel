@@ -94,10 +94,10 @@ class PlaylistAuthResource extends Resource
                 //
             ])
             ->recordActions([
-                EditAction::make()
-                    ->button()->hiddenLabel()->size('sm'),
-                DeleteAction::make()
-                    ->button()->hiddenLabel()->size('sm'),
+                ActionGroup::make([
+                    EditAction::make(),
+                    DeleteAction::make(),
+                ])->button()->hiddenLabel()->size('sm'),
             ], position: RecordActionsPosition::BeforeCells)
             ->toolbarActions([
                 Tables\Actions\BulkActionGroup::make([
