@@ -17,13 +17,11 @@ use Illuminate\Http\Request;
 
 class PlaylistGenerateController extends Controller
 {
-    public function __invoke(Request $request, string $uuid)
+    public function __invoke(Request $request, ?string $uuid = null)
     {
         // Fetch the playlist
-        $playlist = PlaylistFacade::resolvePlaylistByUuid($uuid);
-        if (! $playlist) {
-            return response()->json(['Error' => 'Playlist Not Found'], 404);
-        }
+        $playlist = $uuid ? PlaylistFacade::resolvePlaylistByUuid($uuid) : null;
+        if (! $playlist) { $auth = \App\Facades\PlaylistFacade::authenticate($request->get('username'), $request->get('password')); if ($auth !== false && isset($auth[0]) && $auth[0] && $auth[1] !== 'none') { [$playlist, $authMethod, $username, $password] = $auth; } } if (! $playlist) { return response()->json(['Error' => 'Playlist Not Found or Unauthorized'], 404); }
 
         $usedAuth = null;
         // If the UUID resolved to a PlaylistAuth record, use it as the auth context
@@ -377,10 +375,8 @@ class PlaylistGenerateController extends Controller
     public function hdhr(Request $request, string $uuid, ?string $username = null, ?string $password = null)
     {
         // Fetch the playlist so we can send a 404 if not found
-        $playlist = PlaylistFacade::resolvePlaylistByUuid($uuid);
-        if (! $playlist) {
-            return response()->json(['Error' => 'Playlist Not Found'], 404);
-        }
+        $playlist = $uuid ? PlaylistFacade::resolvePlaylistByUuid($uuid) : null;
+        if (! $playlist) { $auth = \App\Facades\PlaylistFacade::authenticate($request->get('username'), $request->get('password')); if ($auth !== false && isset($auth[0]) && $auth[0] && $auth[1] !== 'none') { [$playlist, $authMethod, $username, $password] = $auth; } } if (! $playlist) { return response()->json(['Error' => 'Playlist Not Found or Unauthorized'], 404); }
 
         // Setup the HDHR device info (pass through optional path auth)
         $deviceInfo = $this->getDeviceInfo($request, $playlist, $username, $password);
@@ -402,10 +398,8 @@ class PlaylistGenerateController extends Controller
     public function hdhrOverview(Request $request, string $uuid, ?string $username = null, ?string $password = null)
     {
         // Fetch the playlist so we can send a 404 if not found
-        $playlist = PlaylistFacade::resolvePlaylistByUuid($uuid);
-        if (! $playlist) {
-            return response()->json(['Error' => 'Playlist Not Found'], 404);
-        }
+        $playlist = $uuid ? PlaylistFacade::resolvePlaylistByUuid($uuid) : null;
+        if (! $playlist) { $auth = \App\Facades\PlaylistFacade::authenticate($request->get('username'), $request->get('password')); if ($auth !== false && isset($auth[0]) && $auth[0] && $auth[1] !== 'none') { [$playlist, $authMethod, $username, $password] = $auth; } } if (! $playlist) { return response()->json(['Error' => 'Playlist Not Found or Unauthorized'], 404); }
 
         // Check auth (prefer path-based auth if present)
         $providedUsername = $username ?? $request->get('username');
@@ -451,10 +445,8 @@ class PlaylistGenerateController extends Controller
     public function hdhrDiscover(Request $request, string $uuid, ?string $username = null, ?string $password = null)
     {
         // Fetch the playlist so we can send a 404 if not found
-        $playlist = PlaylistFacade::resolvePlaylistByUuid($uuid);
-        if (! $playlist) {
-            return response()->json(['Error' => 'Playlist Not Found'], 404);
-        }
+        $playlist = $uuid ? PlaylistFacade::resolvePlaylistByUuid($uuid) : null;
+        if (! $playlist) { $auth = \App\Facades\PlaylistFacade::authenticate($request->get('username'), $request->get('password')); if ($auth !== false && isset($auth[0]) && $auth[0] && $auth[1] !== 'none') { [$playlist, $authMethod, $username, $password] = $auth; } } if (! $playlist) { return response()->json(['Error' => 'Playlist Not Found or Unauthorized'], 404); }
 
         // Return the HDHR device info (pass through optional path auth)
         return $this->getDeviceInfo($request, $playlist, $username, $password);
@@ -463,10 +455,8 @@ class PlaylistGenerateController extends Controller
     public function hdhrLineup(Request $request, string $uuid, ?string $username = null, ?string $password = null)
     {
         // Fetch the playlist
-        $playlist = PlaylistFacade::resolvePlaylistByUuid($uuid);
-        if (! $playlist) {
-            return response()->json(['Error' => 'Playlist Not Found'], 404);
-        }
+        $playlist = $uuid ? PlaylistFacade::resolvePlaylistByUuid($uuid) : null;
+        if (! $playlist) { $auth = \App\Facades\PlaylistFacade::authenticate($request->get('username'), $request->get('password')); if ($auth !== false && isset($auth[0]) && $auth[0] && $auth[1] !== 'none') { [$playlist, $authMethod, $username, $password] = $auth; } } if (! $playlist) { return response()->json(['Error' => 'Playlist Not Found or Unauthorized'], 404); }
 
         // Build the channel query
         $channels = self::getChannelQuery($playlist);
@@ -778,3 +768,4 @@ class PlaylistGenerateController extends Controller
         ]);
     }
 }
+

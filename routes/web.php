@@ -83,8 +83,16 @@ Route::get('/logo-repository/logos/{filename}', [LogoRepositoryController::class
  */
 
 // Generate M3U playlist from the playlist configuration
+Route::get('/playlist.m3u', PlaylistGenerateController::class)
+    ->name('playlist.generate.clean');
 Route::get('/{uuid}/playlist.m3u', PlaylistGenerateController::class)
     ->name('playlist.generate');
+
+// EPG routes
+Route::get('/epg.xml', EpgGenerateController::class)
+    ->name('epg.generate.clean');
+Route::get('/epg.xml.gz', [EpgGenerateController::class, 'compressed'])
+    ->name('epg.generate.compressed.clean');
 
 // Auth-aware HDHR routes (path-based auth to support clients that ignore query string auth)
 Route::get('/{uuid}/hdhr/{username}/{password}/device.xml', [\App\Http\Controllers\PlaylistGenerateController::class, 'hdhr'])

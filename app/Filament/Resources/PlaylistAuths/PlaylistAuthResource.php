@@ -144,8 +144,8 @@ class PlaylistAuthResource extends Resource
                                             $baseUrl = rtrim(config('app.url') ?? $baseUrl, '/');
                                         }
                                         
-                                        // Standard M3U route: /{uuid}/playlist.m3u
-                                        return "{$baseUrl}/{$model->uuid}/playlist.m3u?username=" . urlencode($record->username) . "&password=" . urlencode($record->password);
+                                        // Simplified M3U route: /playlist.m3u
+                                        return "{$baseUrl}/playlist.m3u?username=" . urlencode($record->username) . "&password=" . urlencode($record->password);
                                     }
                                 } catch (\Exception $e) {}
                                 return 'Not assigned';
@@ -163,8 +163,8 @@ class PlaylistAuthResource extends Resource
                                             $baseUrl = rtrim(config('app.url') ?? $baseUrl, '/');
                                         }
                                         
-                                        // Standard EPG route: /{uuid}/epg.xml
-                                        return "{$baseUrl}/{$model->uuid}/epg.xml?username=" . urlencode($record->username) . "&password=" . urlencode($record->password);
+                                        // Simplified EPG route: /epg.xml
+                                        return "{$baseUrl}/epg.xml?username=" . urlencode($record->username) . "&password=" . urlencode($record->password);
                                     }
                                 } catch (\Exception $e) {}
                                 return 'Not assigned';

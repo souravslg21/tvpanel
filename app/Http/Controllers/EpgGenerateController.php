@@ -33,13 +33,11 @@ class EpgGenerateController extends Controller
      *
      * @return Response
      */
-    public function __invoke(string $uuid)
+    public function __invoke(?string $uuid = null)
     {
         // Fetch the playlist
         $playlist = PlaylistFacade::resolvePlaylistByUuid($uuid);
-        if (!$playlist) {
-            return response()->json(['Error' => 'Playlist Not Found'], 404);
-        }
+        if (!$playlist) { $auth = \App\Facades\PlaylistFacade::authenticate(request()->get('username'), request()->get('password')); if ($auth !== false && isset($auth[0]) && $auth[0] && $auth[1] !== 'none') { $playlist = $auth[0]; } } if (!$playlist) { return response()->json(['Error' => 'Playlist Not Found or Unauthorized'], 404); }
 
         // If the UUID resolved to a PlaylistAuth record, pivot to its assigned model
         if ($playlist instanceof PlaylistAuth) {
@@ -65,13 +63,11 @@ class EpgGenerateController extends Controller
      *
      * @return Response
      */
-    public function compressed(string $uuid)
+    public function compressed(?string $uuid = null)
     {
         // Fetch the playlist
         $playlist = PlaylistFacade::resolvePlaylistByUuid($uuid);
-        if (!$playlist) {
-            return response()->json(['Error' => 'Playlist Not Found'], 404);
-        }
+        if (!$playlist) { $auth = \App\Facades\PlaylistFacade::authenticate(request()->get('username'), request()->get('password')); if ($auth !== false && isset($auth[0]) && $auth[0] && $auth[1] !== 'none') { $playlist = $auth[0]; } } if (!$playlist) { return response()->json(['Error' => 'Playlist Not Found or Unauthorized'], 404); }
 
         // If the UUID resolved to a PlaylistAuth record, pivot to its assigned model
         if ($playlist instanceof PlaylistAuth) {
@@ -842,3 +838,4 @@ class EpgGenerateController extends Controller
         ]);
     }
 }
+
