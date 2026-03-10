@@ -8,11 +8,12 @@ use App\Models\Playlist;
 use App\Models\PlaylistAuth;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 
-class PlaylistAuthPivot extends Pivot
+class PlaylistAuthPivot extends Model
 {
+    protected $guarded = [];
     protected $table = 'authenticatables';
 
     public function playlistAuth(): BelongsTo
