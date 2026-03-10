@@ -95,8 +95,11 @@ class PlaylistGenerateController extends Controller
 
         $logoProxyEnabled = $playlist->enable_logo_proxy;
 
-        // Get the base URL
-        $baseUrl = ProxyFacade::getBaseUrl();
+        // Get the base URL dynamically from request
+        $baseUrl = request()->getSchemeAndHttpHost();
+        if (str_contains($baseUrl, 'localhost')) {
+            $baseUrl = rtrim(config('app.url') ?? $baseUrl, '/');
+        }
 
         // Build the channel query
         $channels = self::getChannelQuery($playlist);
@@ -116,7 +119,7 @@ class PlaylistGenerateController extends Controller
 
                 // Output the enabled channels
                 $epgUrl = route('epg.generate', ['uuid' => $playlist->uuid]);
-                echo "#EXTM3U x-tvg-url=\"$epgUrl\" \n";
+                echo "#EXTM3U x-tvg-url=\"$epgUrl\"\n";
                 $channelNumber = $playlist->auto_channel_increment ? $playlist->channel_start - 1 : 0;
                 $idChannelBy = $playlist->id_channel_by;
                 foreach ($cursor as $channel) {
@@ -328,7 +331,7 @@ class PlaylistGenerateController extends Controller
             200,
             [
                 'Access-Control-Allow-Origin' => '*',
-                'Content-Type' => 'audio/x-mpegurl',
+                'Content-Type' => 'application/x-mpegurl',
                 'Cache-Control' => 'no-cache, must-revalidate',
                 'Pragma' => 'no-cache',
             ]
