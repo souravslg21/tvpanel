@@ -10,6 +10,7 @@ use App\Models\Epg;
 use App\Models\MergedPlaylist;
 use App\Models\Playlist;
 use App\Models\PlaylistAlias;
+use App\Models\PlaylistAuth;
 use App\Services\EpgCacheService;
 use Carbon\Carbon;
 use DOMDocument;
@@ -40,8 +41,13 @@ class EpgGenerateController extends Controller
             return response()->json(['Error' => 'Playlist Not Found'], 404);
         }
 
+        // If the UUID resolved to a PlaylistAuth record, pivot to its assigned model
+        if ($playlist instanceof PlaylistAuth) {
+            $playlist = $playlist->getAssignedModel();
+        }
+
         // Handle network playlists - generate EPG from networks
-        if ($playlist instanceof \App\Models\Playlist && $playlist->is_network_playlist) {
+        if ($playlist instanceof Playlist && $playlist->is_network_playlist) {
             return $this->generateNetworkPlaylistEpg($playlist);
         }
 
@@ -65,6 +71,11 @@ class EpgGenerateController extends Controller
         $playlist = PlaylistFacade::resolvePlaylistByUuid($uuid);
         if (!$playlist) {
             return response()->json(['Error' => 'Playlist Not Found'], 404);
+        }
+
+        // If the UUID resolved to a PlaylistAuth record, pivot to its assigned model
+        if ($playlist instanceof PlaylistAuth) {
+            $playlist = $playlist->getAssignedModel();
         }
 
         // Check if we have a valid cached file
@@ -344,7 +355,7 @@ class EpgGenerateController extends Controller
                                     foreach ($programme['images'] as $image) {
                                         $rawUrl = htmlspecialchars($image['url'] ?? '');
                                         $proxiedUrl = $logoProxyEnabled && $rawUrl
-                                            ?LogoProxyController::generateProxyUrl($rawUrl)
+                                            ? LogoProxyController::generateProxyUrl($rawUrl)
                                             : $rawUrl;
 
                                         $url = $proxiedUrl;

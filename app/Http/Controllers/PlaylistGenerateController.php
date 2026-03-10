@@ -11,6 +11,7 @@ use App\Models\CustomPlaylist;
 use App\Models\Network;
 use App\Models\Playlist;
 use App\Models\PlaylistAlias;
+use App\Models\PlaylistAuth;
 use App\Services\PlaylistUrlService;
 use Illuminate\Http\Request;
 
@@ -26,7 +27,7 @@ class PlaylistGenerateController extends Controller
 
         $usedAuth = null;
         // If the UUID resolved to a PlaylistAuth record, use it as the auth context
-        if ($playlist instanceof \App\Models\PlaylistAuth) {
+        if ($playlist instanceof PlaylistAuth) {
             $usedAuth = $playlist;
             $playlist = $usedAuth->getAssignedModel();
 
@@ -309,7 +310,7 @@ class PlaylistGenerateController extends Controller
                             $url = PlaylistUrlService::getEpisodeUrl($episode, $playlist);
                             $title = $episode->title;
                             $runtime = $episode->info['duration_secs'] ?? -1;
-                            $icon = $episode->info['movie_image'] ?? $streamId->info['cover'] ?? '';
+                            $icon = $episode->info['movie_image'] ?? $episode->info['cover'] ?? '';
                             if (empty($icon)) {
                                 $icon = url('/placeholder.png');
                             }
@@ -636,6 +637,7 @@ class PlaylistGenerateController extends Controller
 
         // Return the HDHR device info
         $uuid = $playlist->uuid;
+        $xtreamStatus = $playlist->xtream_status ?? [];
         $tunerCount = (int) $playlist->streams === 0
             ? ($xtreamStatus['user_info']['max_connections'] ?? $playlist->streams ?? 1)
             : $playlist->streams;
