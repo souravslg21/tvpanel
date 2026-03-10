@@ -37,6 +37,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Saade\FilamentLaravelLog\FilamentLaravelLogPlugin;
@@ -119,13 +120,13 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Tools')
                     ->sort(sort: 9)
                     ->icon(null)
-                    ->visible(fn (): bool => auth()->user() && in_array(auth()->user()->email, config('dev.admin_emails'), true)),
+                    ->visible(fn (): bool => Auth::check() && in_array(Auth::user()?->email, (array) config('dev.admin_emails', []), true)),
                 NavigationItem::make('Queue Manager')
                     ->url('/horizon', shouldOpenInNewTab: true)
                     ->group('Tools')
                     ->sort(10)
                     ->icon(null)
-                    ->visible(fn (): bool => auth()->user() && in_array(auth()->user()->email, config('dev.admin_emails'), true)),
+                    ->visible(fn (): bool => Auth::check() && in_array(Auth::user()?->email, (array) config('dev.admin_emails', []), true)),
             ])
             ->breadcrumbs($settings['show_breadcrumbs'])
             ->widgets([
@@ -142,10 +143,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 FilamentSpatieLaravelBackupPlugin::make()
-                    ->authorize(fn (): bool => auth()->user() && in_array(auth()->user()->email, config('dev.admin_emails'), true))
+                    ->authorize(fn (): bool => Auth::check() && in_array(Auth::user()?->email, (array) config('dev.admin_emails', []), true))
                     ->usingPage(Backups::class),
                 FilamentLaravelLogPlugin::make()
-                    ->authorize(fn (): bool => auth()->user() && in_array(auth()->user()->email, config('dev.admin_emails'), true))
+                    ->authorize(fn (): bool => Auth::check() && in_array(Auth::user()?->email, (array) config('dev.admin_emails', []), true))
                     ->navigationGroup('Tools')
                     ->navigationLabel('Logs')
                     ->navigationIcon(null)
