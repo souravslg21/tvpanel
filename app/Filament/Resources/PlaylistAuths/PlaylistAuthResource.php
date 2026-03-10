@@ -139,7 +139,12 @@ class PlaylistAuthResource extends Resource
                                 try {
                                     $model = $record->getAssignedModel();
                                     if ($model && !empty($model->uuid)) {
-                                        $baseUrl = rtrim(config('app.url') ?? '', '/');
+                                        // Force the correct base URL from request or config override
+                                        $baseUrl = request()->getSchemeAndHttpHost();
+                                        if (str_contains($baseUrl, 'localhost')) {
+                                            $baseUrl = rtrim(config('app.url') ?? $baseUrl, '/');
+                                        }
+                                        
                                         $className = get_class($model);
                                         $type = null;
                                         if ($className === Playlist::class) $type = 'playlist';
@@ -147,7 +152,7 @@ class PlaylistAuthResource extends Resource
                                         elseif ($className === CustomPlaylist::class) $type = 'custom';
                                         
                                         if ($type) {
-                                            return "{$baseUrl}/{$type}/{$model->uuid}/m3u?username={$record->username}&password={$record->password}";
+                                            return "{$baseUrl}/{$type}/{$model->uuid}/m3u?username=" . urlencode($record->username) . "&password=" . urlencode($record->password);
                                         }
                                     }
                                 } catch (\Exception $e) {}
@@ -156,7 +161,13 @@ class PlaylistAuthResource extends Resource
                         TextInput::make('xtream_host')
                             ->label('Xtream API Host')
                             ->readOnly()
-                            ->default(fn () => rtrim(config('app.url') ?? '', '/')),
+                            ->formatStateUsing(function () {
+                                $baseUrl = request()->getSchemeAndHttpHost();
+                                if (str_contains($baseUrl, 'localhost')) {
+                                    $baseUrl = rtrim(config('app.url') ?? $baseUrl, '/');
+                                }
+                                return $baseUrl;
+                            }),
                     ])->columns(1),
             ]);
     }
