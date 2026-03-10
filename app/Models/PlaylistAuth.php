@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\CustomPlaylist;
+use App\Models\MergedPlaylist;
+use App\Models\Playlist;
 use App\Pivots\PlaylistAuthPivot;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
