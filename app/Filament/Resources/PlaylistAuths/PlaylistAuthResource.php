@@ -266,7 +266,7 @@ class PlaylistAuthResource extends Resource
                             ]);
                         })
                         ->suffixAction(function ($state) {
-                            return Forms\Components\Actions\Action::make('copy_m3u')
+                            return Actions\Action::make('copy_m3u')
                                 ->icon('heroicon-m-clipboard')
                                 ->action(fn () => null)
                                 ->extraAttributes([
