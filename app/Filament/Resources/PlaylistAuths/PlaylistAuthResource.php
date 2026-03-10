@@ -191,7 +191,7 @@ class PlaylistAuthResource extends Resource
                         TextInput::make('xtream_url')
                             ->label('Xtream API Host')
                             ->readOnly()
-                            ->formatStateUsing(fn () => rtrim(config('app.url'), '/'))
+                            ->formatStateUsing(fn () => rtrim(config('app.url') ?? '', '/'))
                             ->helperText('Use this as the Server URL in Xtream API players.'),
                     ])->columns(2),
             ]);
