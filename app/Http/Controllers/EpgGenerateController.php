@@ -37,7 +37,16 @@ class EpgGenerateController extends Controller
     {
         // Fetch the playlist
         $playlist = PlaylistFacade::resolvePlaylistByUuid($uuid);
-        if (!$playlist) { $auth = \App\Facades\PlaylistFacade::authenticate(request()->get('username'), request()->get('password')); if ($auth !== false && isset($auth[0]) && $auth[0] && $auth[1] !== 'none') { $playlist = $auth[0]; } } if (!$playlist) { return response()->json(['Error' => 'Playlist Not Found or Unauthorized'], 404); }
+        if (!$playlist) {
+            $auth = \App\Facades\PlaylistFacade::authenticate(request()->get('username'), request()->get('password'));
+            if ($auth !== false && isset($auth[0]) && $auth[0] && $auth[1] !== 'none') {
+                $playlist = $auth[0];
+            }
+        }
+
+        if (!$playlist) {
+            return response()->json(['Error' => 'Playlist Not Found or Unauthorized'], 404);
+        }
 
         // If the UUID resolved to a PlaylistAuth record, pivot to its assigned model
         if ($playlist instanceof PlaylistAuth) {
@@ -67,7 +76,16 @@ class EpgGenerateController extends Controller
     {
         // Fetch the playlist
         $playlist = PlaylistFacade::resolvePlaylistByUuid($uuid);
-        if (!$playlist) { $auth = \App\Facades\PlaylistFacade::authenticate(request()->get('username'), request()->get('password')); if ($auth !== false && isset($auth[0]) && $auth[0] && $auth[1] !== 'none') { $playlist = $auth[0]; } } if (!$playlist) { return response()->json(['Error' => 'Playlist Not Found or Unauthorized'], 404); }
+        if (!$playlist) {
+            $auth = \App\Facades\PlaylistFacade::authenticate(request()->get('username'), request()->get('password'));
+            if ($auth !== false && isset($auth[0]) && $auth[0] && $auth[1] !== 'none') {
+                $playlist = $auth[0];
+            }
+        }
+
+        if (!$playlist) {
+            return response()->json(['Error' => 'Playlist Not Found or Unauthorized'], 404);
+        }
 
         // If the UUID resolved to a PlaylistAuth record, pivot to its assigned model
         if ($playlist instanceof PlaylistAuth) {
