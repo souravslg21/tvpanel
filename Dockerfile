@@ -194,13 +194,15 @@ RUN mkdir -p \
     /etc/supervisor.d/conf.d \
     /var/log/supervisor \
     /var/lib/postgresql \
-    /run/postgresql && \
+    /run/postgresql \
+    /var/www/config && \
     touch /var/run/supervisord.pid \
     /var/log/supervisor/supervisord.log && \
     chown -R ${WWWUSER}:${WWWGROUP} \
     /var/lib/nginx \
     /var/lib/postgresql \
-    /run/postgresql
+    /run/postgresql \
+    /var/www/config
 
 # Copy configuration files (these change less frequently)
 COPY --chown=${WWWUSER}:${WWWGROUP} ./docker/8.4/redis.conf /etc/redis/redis.tmpl

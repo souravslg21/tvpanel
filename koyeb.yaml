@@ -1,0 +1,36 @@
+name: srv-iptv-panel
+services:
+  - name: web
+    git:
+      repository: souravslg21/tvpanel
+      branch: main
+    docker:
+      dockerfile: Dockerfile
+    ports:
+      - port: 36400
+        protocol: http
+    routes:
+      - path: /
+        port: 36400
+    regions:
+      - fra # Frankfurt is a good default for Europe/Global
+    instance_type: nano # 512MB RAM, good for starting
+    env:
+      - key: APP_NAME
+        value: "SrV Creation IPTV"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: TZ
+        value: UTC
+    volumes:
+      - name: config-data
+        path: /var/www/config
+        size: 1
