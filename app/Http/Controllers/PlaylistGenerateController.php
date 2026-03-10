@@ -119,7 +119,12 @@ class PlaylistGenerateController extends Controller
 
                 // Output the enabled channels
                 $epgUrl = route('epg.generate', ['uuid' => $playlist->uuid]);
+                if ($usedAuth) {
+                    $epgUrl .= '?username=' . urlencode($usedAuth->username) . '&password=' . urlencode($usedAuth->password);
+                }
                 echo "#EXTM3U x-tvg-url=\"$epgUrl\"\n";
+
+                $count = 0;
                 $channelNumber = $playlist->auto_channel_increment ? $playlist->channel_start - 1 : 0;
                 $idChannelBy = $playlist->id_channel_by;
                 foreach ($cursor as $channel) {
@@ -251,6 +256,7 @@ class PlaylistGenerateController extends Controller
                         }
                     }
                     echo $url."\n";
+                    $count++;
                 }
 
                 // If the playlist includes series in M3U, include the series episodes
@@ -321,12 +327,15 @@ class PlaylistGenerateController extends Controller
                             $extInf .= " tvg-chno=\"$channelNo\" tvg-id=\"$tvgId\" tvg-name=\"$name\" tvg-logo=\"$icon\" group-title=\"$group\"";
                             echo "$extInf,".$title."\n";
                             echo $url."\n";
+                            $count++;
                         }
                     }
                 }
 
-                // Networks are now synced as actual Channel records with network_id
                 // They will be included automatically in the channel query above
+                if ($count === 0) {
+                    echo "# No active channels found in this playlist. Please ensure the playlist is synced and channels are enabled.\n";
+                }
             },
             200,
             [
