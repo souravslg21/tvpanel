@@ -2,13 +2,14 @@
 
 namespace App\Filament\Resources\PlaylistAuths;
 
-use App\Filament\Resources\PlaylistAuthResource\Pages;
-use App\Filament\Resources\PlaylistAuths\Pages\ListPlaylistAuths;
+use App\Filament\Resources\PlaylistAuths\Pages;
 use App\Models\CustomPlaylist;
 use App\Models\MergedPlaylist;
 use App\Models\Playlist;
 use App\Models\PlaylistAuth;
 use App\Traits\HasUserFiltering;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -23,8 +24,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Illuminate\Database\Eloquent\Builder;
@@ -113,7 +112,7 @@ class PlaylistAuthResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListPlaylistAuths::route('/'),
+            'index' => Pages\ListPlaylistAuths::route('/'),
         ];
     }
 
