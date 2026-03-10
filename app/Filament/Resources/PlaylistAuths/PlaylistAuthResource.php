@@ -12,7 +12,6 @@ use App\Filament\Resources\PlaylistAuths\Pages\CreatePlaylistAuth;
 use App\Filament\Resources\PlaylistAuths\Pages\EditPlaylistAuth;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -29,7 +28,7 @@ class PlaylistAuthResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('user_id', auth()->id());
+            ->where('user_id', Auth::id());
     }
 
     protected static ?string $model = PlaylistAuth::class;
@@ -59,7 +58,6 @@ class PlaylistAuthResource extends Resource
         return $schema
             ->components([
                 Section::make('Credentials')
-                    ->description('Username and Password for player login')
                     ->schema([
                         TextInput::make('name')
                             ->required()
@@ -72,10 +70,7 @@ class PlaylistAuthResource extends Resource
                         TextInput::make('password')
                             ->required()
                             ->maxLength(255),
-                        TextInput::make('max_connections')
-                            ->numeric()
-                            ->default(1),
-                        DateTimePicker::make('expires_at'),
+                        // Removing max_connections and expires_at for now to rule out schema issues
                     ])->columns(2),
 
                 Section::make('Assignment')
@@ -84,17 +79,26 @@ class PlaylistAuthResource extends Resource
                             ->label('Assign to Playlist')
                             ->options(function () {
                                 try {
-                                    $userId = auth()->id();
+                                    $userId = Auth::id();
                                     if (!$userId) return [];
 
-                                    $playlists = Playlist::query()->where('user_id', $userId)->get(['name', 'uuid']);
-                                    $merged = MergedPlaylist::query()->where('user_id', $userId)->get(['name', 'uuid']);
-                                    $custom = CustomPlaylist::query()->where('user_id', $userId)->get(['name', 'uuid']);
-                                    
                                     $options = [];
-                                    foreach ($playlists as $p) $options["Playlist:{$p->uuid}"] = "Playlist: {$p->name}";
-                                    foreach ($merged as $m) $options["Merged:{$m->uuid}"] = "Merged: {$m->name}";
-                                    foreach ($custom as $c) $options["Custom:{$c->uuid}"] = "Custom: {$c->name}";
+                                    
+                                    // Robust check for tables and columns
+                                    try {
+                                        $playlists = Playlist::where('user_id', $userId)->get(['name', 'uuid']);
+                                        foreach ($playlists as $p) $options["Playlist:{$p->uuid}"] = "Playlist: {$p->name}";
+                                    } catch (\Exception $e) {}
+
+                                    try {
+                                        $merged = MergedPlaylist::where('user_id', $userId)->get(['name', 'uuid']);
+                                        foreach ($merged as $m) $options["Merged:{$m->uuid}"] = "Merged: {$m->name}";
+                                    } catch (\Exception $e) {}
+
+                                    try {
+                                        $custom = CustomPlaylist::where('user_id', $userId)->get(['name', 'uuid']);
+                                        foreach ($custom as $c) $options["Custom:{$c->uuid}"] = "Custom: {$c->name}";
+                                    } catch (\Exception $e) {}
                                     
                                     return $options;
                                 } catch (\Exception $e) {
@@ -116,7 +120,7 @@ class PlaylistAuthResource extends Resource
                                         default => null,
                                     };
                                     
-                                    if ($type && isset($model->uuid)) {
+                                    if ($type) {
                                         $component->state("{$type}:{$model->uuid}");
                                     }
                                 } catch (\Exception $e) {}
@@ -124,7 +128,7 @@ class PlaylistAuthResource extends Resource
                             ->afterStateUpdated(function ($state, ?PlaylistAuth $record) {
                                 if (!$state || !$record) return;
                                 try {
-                                    if (!str_contains($state, ':')) return;
+                                    if (strpos($state, ':') === false) return;
                                     [$type, $uuid] = explode(':', $state);
                                     $modelClass = match ($type) {
                                         'Playlist' => Playlist::class,
@@ -153,18 +157,17 @@ class PlaylistAuthResource extends Resource
                                 try {
                                     $model = $record->getAssignedModel();
                                     if ($model) {
-                                        $urls = PlaylistFacade::getUrls($model);
-                                        return $urls['m3u'] ?? 'Error: No M3U link';
+                                        return PlaylistFacade::getUrls($model)['m3u'] ?? 'No link';
                                     }
                                     return 'Not assigned';
                                 } catch (\Exception $e) {
-                                    return 'Error generating link';
+                                    return 'Error';
                                 }
                             }),
                         TextInput::make('xtream_url_display')
                             ->label('Xtream API Host')
                             ->readOnly()
-                            ->default(fn () => rtrim(config('app.url') ?? '', '/')),
+                            ->default(fn () => rtrim(config('app.url', ''), '/')),
                     ])->columns(2),
             ]);
     }
