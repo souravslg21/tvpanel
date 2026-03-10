@@ -5,6 +5,10 @@ namespace App\Filament\Resources\PlaylistAuths;
 use App\Filament\Resources\PlaylistAuths\Pages\ListPlaylistAuths;
 use App\Models\PlaylistAuth;
 use App\Traits\HasUserFiltering;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -13,20 +17,24 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class PlaylistAuthResource extends Resource
 {
+    use HasUserFiltering;
 
     protected static ?string $model = PlaylistAuth::class;
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    protected static ?string $navigationLabel = 'Playlist Auths';
+
+    protected static ?string $label = 'Playlist Auth';
+
+    protected static ?string $pluralLabel = 'Playlist Auths';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Playlist';
 
@@ -90,10 +98,10 @@ class PlaylistAuthResource extends Resource
                     ->button()->hiddenLabel()->size('sm'),
                 DeleteAction::make()
                     ->button()->hiddenLabel()->size('sm'),
-            ])
+            ], position: RecordActionsPosition::BeforeCells)
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
