@@ -23,7 +23,6 @@ use Illuminate\Support\Facades\Auth;
 
 class PlaylistAuthResource extends Resource
 {
-    use HasUserFiltering;
 
     protected static ?string $model = PlaylistAuth::class;
 
