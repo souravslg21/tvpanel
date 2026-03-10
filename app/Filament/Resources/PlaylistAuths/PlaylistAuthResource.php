@@ -9,13 +9,24 @@ use App\Models\MergedPlaylist;
 use App\Models\Playlist;
 use App\Models\PlaylistAuth;
 use App\Traits\HasUserFiltering;
-use Filament\Actions;
-use Filament\Forms;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Enums\RecordActionsPosition;
+use Filament\Tables\Table;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
@@ -49,29 +60,29 @@ class PlaylistAuthResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('username')
+                TextColumn::make('username')
                     ->searchable()
                     ->toggleable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('max_connections')
+                TextColumn::make('max_connections')
                     ->label('Connections')
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('assigned_model_name')
+                TextColumn::make('assigned_model_name')
                     ->label('Assigned To')
                     ->toggleable(),
-                Tables\Columns\ToggleColumn::make('enabled')
+                ToggleColumn::make('enabled')
                     ->toggleable()
                     ->tooltip('Toggle auth status')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -80,14 +91,14 @@ class PlaylistAuthResource extends Resource
                 //
             ])
             ->recordActions([
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->button()->hiddenLabel()->size('sm'),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->button()->hiddenLabel()->size('sm'),
-            ], position: Tables\Enums\RecordActionsPosition::BeforeCells)
+            ], position: RecordActionsPosition::BeforeCells)
             ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -109,33 +120,33 @@ class PlaylistAuthResource extends Resource
     public static function getForm(): array
     {
         $schema = [
-            Forms\Components\TextInput::make('name')
+            TextInput::make('name')
                 ->label('Name')
                 ->required()
                 ->helperText('Used to reference this auth internally.')
                 ->columnSpan(1),
-            Forms\Components\Toggle::make('enabled')
+            Toggle::make('enabled')
                 ->label('Enabled')
                 ->columnSpan(1)
                 ->inline(false)
                 ->default(true),
-            Forms\Components\TextInput::make('username')
+            TextInput::make('username')
                 ->label('Username')
                 ->required()
                 ->columnSpan(1),
-            Forms\Components\TextInput::make('password')
+            TextInput::make('password')
                 ->label('Password')
                 ->password()
                 ->required()
                 ->revealable()
                 ->columnSpan(1),
-            Forms\Components\TextInput::make('max_connections')
+            TextInput::make('max_connections')
                 ->label('Max Connections')
                 ->numeric()
                 ->default(1)
                 ->required()
                 ->columnSpan(1),
-            Forms\Components\DateTimePicker::make('expires_at')
+            DateTimePicker::make('expires_at')
                 ->label('Expiration (date & time)')
                 ->seconds(false)
                 ->native(false)
@@ -153,7 +164,7 @@ class PlaylistAuthResource extends Resource
                 ->hiddenOn(['create'])
                 ->schema([
                     ...$schema,
-                    Forms\Components\Select::make('assigned_playlist')
+                    Select::make('assigned_playlist')
                         ->label('Assigned to Playlist')
                         ->options(function ($record) {
                             $options = [];
@@ -246,7 +257,7 @@ class PlaylistAuthResource extends Resource
             Section::make('Access Details')
                 ->description('Share these details with your customer.')
                 ->schema([
-                    Forms\Components\TextInput::make('m3u_url')
+                    TextInput::make('m3u_url')
                         ->label('M3U Playlist URL')
                         ->readonly()
                         ->default(function ($record) {
@@ -266,7 +277,7 @@ class PlaylistAuthResource extends Resource
                             ]);
                         })
                         ->suffixAction(function ($state) {
-                            return Actions\Action::make('copy_m3u')
+                            return FormAction::make('copy_m3u')
                                 ->icon('heroicon-m-clipboard')
                                 ->action(fn () => null)
                                 ->extraAttributes([
@@ -274,17 +285,17 @@ class PlaylistAuthResource extends Resource
                                 ]);
                         })
                         ->columnSpanFull(),
-                    Forms\Components\TextInput::make('xtream_url')
+                    TextInput::make('xtream_url')
                         ->label('Xtream API Server URL')
                         ->readonly()
                         ->default(fn () => url('/'))
                         ->columnSpan(2),
-                    Forms\Components\TextInput::make('xtream_username')
+                    TextInput::make('xtream_username')
                         ->label('Xtream Username')
                         ->readonly()
                         ->default(fn ($record) => $record?->username)
                         ->columnSpan(1),
-                    Forms\Components\TextInput::make('xtream_password')
+                    TextInput::make('xtream_password')
                         ->label('Xtream Password')
                         ->readonly()
                         ->default(fn ($record) => $record?->password)
