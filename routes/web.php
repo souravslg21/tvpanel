@@ -37,6 +37,11 @@ Route::get('/player/popout', [\App\Http\Controllers\PlayerController::class, 'po
     ->name('player.popout');
 
 /*
+ * JioTV Smart TV route
+ */
+Route::view('/jiotv', 'jiotv')->name('jiotv');
+
+/*
  * DEBUG routes
  */
 

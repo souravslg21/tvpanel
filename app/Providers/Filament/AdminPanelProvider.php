@@ -65,7 +65,7 @@ class AdminPanelProvider extends PanelProvider
                     ? (bool) $envShowWan
                     : (bool) ($userPreferences->output_wan_address ?? $settings['output_wan_address']),
             ];
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             // Ignore
         }
         $adminPanel = $panel

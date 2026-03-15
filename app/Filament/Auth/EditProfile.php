@@ -6,7 +6,7 @@ use Filament\Forms;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
-class EditProfile extends \Filament\Auth\Pages\EditProfile
+class EditProfile extends \Filament\Pages\Auth\EditProfile
 {
     public function form(Schema $schema): Schema
     {

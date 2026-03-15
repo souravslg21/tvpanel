@@ -7,7 +7,7 @@ use Filament\Schemas\Components\Component;
 use Filament\Schemas\Schema;
 use Illuminate\Validation\ValidationException;
 
-class Login extends \Filament\Auth\Pages\Login
+class Login extends \Filament\Pages\Auth\Login
 {
     /**
      * Get the form fields for the component.
